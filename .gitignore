@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Virtual env
+venv/
+.env/
+
+# ChromaDB
+chroma_db/
+
+# Large dataset/cache files
+*.bin
+*.pickle
+*.sqlite3
+
+# OS files
+.DS_Store
+Thumbs.db
+
+structured_project_profiles.json
+embedding_documents.json
+
+DOB_NOW.csv

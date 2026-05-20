@@ -1,8 +1,3 @@
-# =========================================================
-# main.py
-# FASTAPI + RAG PIPELINE
-# =========================================================
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -14,10 +9,6 @@ from models import (
 from rag_pipeline import (
     generate_risk_prediction
 )
-
-# =========================================================
-# FASTAPI APP
-# =========================================================
 
 app = FastAPI(
 
@@ -40,10 +31,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# =========================================================
-# ROOT ROUTE
-# =========================================================
-
 @app.get("/")
 def home():
 
@@ -53,9 +40,6 @@ def home():
         "NYC Construction Risk Predictor API Running"
     }
 
-# =========================================================
-# RISK PREDICTION ENDPOINT
-# =========================================================
 
 @app.post(
 

@@ -1,7 +1,3 @@
-# =========================================================
-# rag_pipeline.py
-# =========================================================
-
 import os
 import sqlite3
 import chromadb
@@ -16,17 +12,9 @@ from models import (
     RiskPredictionOutput
 )
 
-# =========================================================
-# 1. LOAD EMBEDDING MODEL
-# =========================================================
-
 embedding_model = SentenceTransformer(
     "all-MiniLM-L6-v2"
 )
-
-# =========================================================
-# 2. CONNECT TO CHROMADB
-# =========================================================
 
 chroma_client = chromadb.PersistentClient(
     path="./chroma_db"
@@ -35,18 +23,6 @@ chroma_client = chromadb.PersistentClient(
 collection = chroma_client.get_collection(
     name="construction_risk_rag"
 )
-
-# =========================================================
-# 3. CONNECT TO SQLITE
-# =========================================================
-
-# conn = sqlite3.connect("risk_data.db")
-
-# cursor = conn.cursor()
-
-# =========================================================
-# 4. GEMINI LLM
-# =========================================================
 
 from dotenv import load_dotenv
 import os
@@ -66,17 +42,9 @@ llm = ChatGoogleGenerativeAI(
     temperature=0.3
 )
 
-# =========================================================
-# 5. OUTPUT PARSER
-# =========================================================
-
 parser = PydanticOutputParser(
     pydantic_object=RiskPredictionOutput
 )
-
-# =========================================================
-# 6. MAIN RAG FUNCTION
-# =========================================================
 
 def generate_risk_prediction(
     project: ProjectSubmission   
@@ -88,10 +56,6 @@ def generate_risk_prediction(
 )
 
     cursor = conn.cursor()
-
-    # =====================================================
-    # STEP 1 — CREATE SEMANTIC SEARCH QUERY
-    # =====================================================
 
     query_text = f"""
 
@@ -123,17 +87,9 @@ def generate_risk_prediction(
 
     """
 
-    # =====================================================
-    # STEP 2 — CREATE EMBEDDING
-    # =====================================================
-
     query_embedding = embedding_model.encode(
         [query_text]
     ).tolist()[0]
-
-    # =====================================================
-    # STEP 3 — SEARCH CHROMADB
-    # =====================================================
 
     results = collection.query(
 
@@ -141,10 +97,6 @@ def generate_risk_prediction(
 
         n_results=5
     )
-
-    # =====================================================
-    # STEP 4 — EXTRACT BINs
-    # =====================================================
 
     retrieved_bins = []
 
@@ -156,9 +108,6 @@ def generate_risk_prediction(
 
             retrieved_bins.append(bin_number)
 
-    # =====================================================
-    # STEP 5 — FETCH RISK HISTORIES
-    # =====================================================
 
     risk_histories = []
 
@@ -177,9 +126,6 @@ def generate_risk_prediction(
 
         rows = cursor.fetchall()
 
-        # -------------------------------------------------
-        # SAFE BASELINE LOGIC
-        # -------------------------------------------------
 
         if len(rows) == 0:
 
@@ -208,15 +154,9 @@ def generate_risk_prediction(
 
         risk_histories.append(history)
 
-    # =====================================================
-    # STEP 6 — COMBINE CONTEXT
-    # =====================================================
 
     combined_history = "\n\n".join(risk_histories)
 
-    # =====================================================
-    # STEP 7 — PROMPT TEMPLATE
-    # =====================================================
 
     prompt = PromptTemplate(
 
@@ -268,9 +208,6 @@ def generate_risk_prediction(
         }
     )
 
-    # =====================================================
-    # STEP 8 — FINAL PROMPT
-    # =====================================================
 
     final_prompt = prompt.format(
 
@@ -279,15 +216,9 @@ def generate_risk_prediction(
         historical_context=combined_history
     )
 
-    # =====================================================
-    # STEP 9 — GEMINI GENERATION
-    # =====================================================
 
     response = llm.invoke(final_prompt)
 
-    # =====================================================
-    # STEP 10 — PARSE STRUCTURED OUTPUT
-    # =====================================================
 
     parsed_response = parser.parse(
         response.content

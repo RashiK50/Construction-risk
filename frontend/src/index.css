@@ -1,0 +1,78 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-background: hsl(240 10% 3.9%);
+  --color-foreground: hsl(0 0% 98%);
+  --color-card: hsl(240 10% 5%);
+  --color-card-foreground: hsl(0 0% 98%);
+  --color-border: hsl(240 10% 15%);
+  --color-primary: hsl(210 100% 50%);
+  --color-primary-foreground: hsl(0 0% 100%);
+  --color-secondary: hsl(240 10% 12%);
+  --color-secondary-foreground: hsl(0 0% 98%);
+  --color-muted: hsl(240 10% 15%);
+  --color-muted-foreground: hsl(240 5% 65%);
+  --color-accent: hsl(210 100% 50%);
+  --color-accent-foreground: hsl(0 0% 100%);
+
+  --radius-lg: 0.75rem;
+  --radius-md: calc(0.75rem - 2px);
+  --radius-sm: calc(0.75rem - 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased min-h-screen relative overflow-x-hidden;
+    font-family: 'Inter', sans-serif;
+  }
+
+  /* Grid background for AI aesthetic */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background-image: 
+      linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(circle at center, black, transparent 80%);
+    -webkit-mask-image: radial-gradient(circle at center, black, transparent 80%);
+    pointer-events: none;
+  }
+}
+
+@layer utilities {
+  .glass-card {
+    @apply bg-card/40 backdrop-blur-md border border-white/10 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.5)];
+  }
+  
+  .glass-panel {
+    @apply bg-black/40 backdrop-blur-xl border border-white/5;
+  }
+  
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400;
+  }
+  
+  .glow-border {
+    position: relative;
+  }
+  .glow-border::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    z-index: -1;
+    border-radius: inherit;
+    background: linear-gradient(to right, #3b82f6, #10b981);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .glow-border:hover::after {
+    opacity: 0.5;
+  }
+}

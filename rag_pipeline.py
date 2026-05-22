@@ -7,6 +7,8 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 from sentence_transformers import SentenceTransformer
 
+SIMILARITY_THRESHOLD = 0.78
+
 from models import (
     ProjectSubmission,
     RiskPredictionOutput
@@ -98,20 +100,78 @@ def generate_risk_prediction(
         n_results=5
     )
 
-    retrieved_bins = []
+    valid_projects = []
 
-    for metadata in results["metadatas"][0]:
+    metadatas = results["metadatas"][0]
 
-        bin_number = metadata.get("bin")
+    distances = results["distances"][0]
 
-        if bin_number:
+    for metadata, distance in zip(
+        metadatas,
+        distances
+    ):
 
-            retrieved_bins.append(bin_number)
+        similarity = 1 - distance
 
+        if similarity >= SIMILARITY_THRESHOLD:
+
+            valid_projects.append({
+
+                "metadata": metadata,
+
+                "similarity": similarity
+            })
+
+    LOW_CONFIDENCE_MODE = False
+
+    if len(valid_projects) < 2:
+
+        LOW_CONFIDENCE_MODE = True
+
+    retrieved_bins = [
+
+        project["metadata"]["bin"]
+
+        for project in valid_projects
+    ]
+
+    similarity_scores = [
+
+        project["similarity"]
+
+        for project in valid_projects
+    ]
+
+    if len(similarity_scores) > 0:
+
+        avg_similarity = sum(
+            similarity_scores
+        ) / len(similarity_scores)
+
+    else:
+
+        avg_similarity = 0
+
+    if avg_similarity >= 0.85:
+
+        confidence_level = "HIGH"
+
+    elif avg_similarity >= 0.72:
+
+        confidence_level = "MEDIUM"
+
+    else:
+
+        confidence_level = "LOW"
 
     risk_histories = []
 
-    for bin_number in retrieved_bins:
+    for project in valid_projects:
+
+        bin_number = project["metadata"].get("bin")
+
+        if not bin_number:
+            continue
 
         cursor.execute(
 
@@ -157,6 +217,36 @@ def generate_risk_prediction(
 
     combined_history = "\n\n".join(risk_histories)
 
+    if LOW_CONFIDENCE_MODE:
+
+        retrieval_instruction = """
+
+        WARNING:
+        Retrieved historical projects have weak
+        semantic similarity to the current project.
+
+        Do NOT make highly specific claims.
+
+        Avoid overconfident predictions.
+
+        Provide generalized NYC construction
+        safety guidance instead of strongly
+        grounded historical conclusions.
+
+        Clearly mention that prediction confidence
+        is reduced due to limited historical matches.
+
+        """
+
+    else:
+
+        retrieval_instruction = """
+
+        Use the retrieved historical NYC
+        construction violations as strong
+        grounding for risk prediction.
+
+        """
 
     prompt = PromptTemplate(
 
@@ -183,6 +273,8 @@ def generate_risk_prediction(
 
         ------------------------------------------------
 
+        {retrieval_instruction}
+
         Predict:
 
         - likelihood of violations
@@ -198,7 +290,9 @@ def generate_risk_prediction(
 
             "query_text",
 
-            "historical_context"
+            "historical_context",
+
+            "retrieval_instruction"
         ],
 
         partial_variables={
@@ -213,8 +307,24 @@ def generate_risk_prediction(
 
         query_text=query_text,
 
-        historical_context=combined_history
+        historical_context=combined_history,
+
+        retrieval_instruction=retrieval_instruction
     )
+
+
+    retrieval_summary = f"""
+
+        Retrieved {len(valid_projects)}
+        high-confidence historical projects.
+
+        Average similarity:
+        {round(avg_similarity, 2)}
+
+        Confidence Level:
+        {confidence_level}
+
+        """
 
 
     response = llm.invoke(final_prompt)
@@ -222,6 +332,19 @@ def generate_risk_prediction(
 
     parsed_response = parser.parse(
         response.content
+    )
+
+    parsed_response.confidence_level = (
+        confidence_level
+    )
+
+    parsed_response.retrieved_project_count = (
+        len(valid_projects)
+    )
+
+    parsed_response.average_similarity_score = round(
+        avg_similarity,
+        2
     )
 
     conn.close()

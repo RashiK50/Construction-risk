@@ -7,6 +7,9 @@ export interface RiskData {
   primary_risks: string[];
   recommended_mitigations: string[];
   historical_summary: string;
+  confidence_level: 'HIGH' | 'MEDIUM' | 'LOW';
+  retrieved_project_count: number;
+  average_similarity_score: number;
 }
 
 interface RiskDashboardProps {
@@ -79,16 +82,41 @@ export const RiskDashboard: React.FC<RiskDashboardProps> = ({ data, isLoading })
 
   const strokeDashoffset = 283 - (283 * data.risk_score) / 100;
 
+  const getConfidenceColor = (level: string) => {
+    if (level === 'HIGH') return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
+    if (level === 'MEDIUM') return 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20';
+    return 'text-red-400 bg-red-500/10 border-red-500/20';
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
     >
+      {data.confidence_level === 'LOW' && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex items-start gap-3 mb-6"
+        >
+          <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+          <div>
+            <h4 className="text-amber-400 font-semibold text-sm">Limited highly similar historical projects found.</h4>
+            <p className="text-amber-400/80 text-xs mt-1">Predictions may be less reliable.</p>
+          </div>
+        </motion.div>
+      )}
+
       {/* COMPONENT A - RISK SCORE CARD */}
       <div className={cn("glass-card rounded-2xl p-6 border flex items-center justify-between", getRiskBg(data.risk_score))}>
         <div>
-          <h2 className="text-lg font-semibold text-white/90 mb-1">Overall AI Risk Score</h2>
+          <div className="flex items-center gap-3 mb-1">
+            <h2 className="text-lg font-semibold text-white/90">Overall AI Risk Score</h2>
+            <span className={cn("px-2 py-0.5 text-[10px] font-bold uppercase rounded border", getConfidenceColor(data.confidence_level))}>
+              {data.confidence_level} CONFIDENCE
+            </span>
+          </div>
           <p className="text-sm text-muted-foreground mb-4">Based on historical violation patterns</p>
           <div className={cn("inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold border", getRiskBg(data.risk_score), getRiskColor(data.risk_score))}>
             {data.risk_score >= 70 ? <AlertTriangle className="w-4 h-4" /> : <Activity className="w-4 h-4" />}
@@ -116,6 +144,23 @@ export const RiskDashboard: React.FC<RiskDashboardProps> = ({ data, isLoading })
           </div>
         </div>
       </div>
+
+      {/* RETRIEVAL INSIGHTS CARD */}
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="glass-card rounded-xl p-4 border flex items-center justify-around text-sm"
+      >
+        <div className="flex flex-col items-center">
+          <span className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Retrieved Projects</span>
+          <span className="font-semibold text-white text-lg">{data.retrieved_project_count}</span>
+        </div>
+        <div className="w-px h-8 bg-white/10" />
+        <div className="flex flex-col items-center">
+          <span className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Similarity Score</span>
+          <span className="font-semibold text-white text-lg">{data.average_similarity_score}</span>
+        </div>
+      </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* COMPONENT B - PRIMARY RISKS */}

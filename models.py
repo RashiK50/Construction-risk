@@ -30,3 +30,9 @@ class RiskPredictionOutput(BaseModel):
     primary_risks: List[str] = Field(..., description="Specific risks identified from historical data")
     recommended_mitigations: List[str] = Field(..., description="Actionable steps to avoid these risks")
     historical_summary: str = Field(..., description="A short narrative summarizing the retrieved ChromaDB/SQLite context")
+
+    confidence_level: str
+
+    retrieved_project_count: int
+
+    average_similarity_score: float

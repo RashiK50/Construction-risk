@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '../lib/utils';
 import { Loader2, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -30,6 +30,13 @@ const BOROUGHS = ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island'];
 const BUILDING_TYPES = ['1-2-3 Family', 'Commercial', 'Mixed Use', 'Industrial'];
 const TITLES = ['PE', 'RA', 'GC', 'Owner', 'Other'];
 
+const LOADING_MESSAGES = [
+  "Embedding project profile...",
+  "Searching historical permits...",
+  "Retrieving violation history...",
+  "Generating AI analysis..."
+];
+
 export const ProjectForm: React.FC<ProjectFormProps> = ({ onSubmit, isLoading }) => {
   const [formData, setFormData] = useState<FormData>({
     job_type: 'A1',
@@ -42,6 +49,19 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ onSubmit, isLoading })
     work_types: [],
     project_description: '',
   });
+
+  const [loadingMsgIdx, setLoadingMsgIdx] = useState(0);
+
+  useEffect(() => {
+    if (!isLoading) {
+      setLoadingMsgIdx(0);
+      return;
+    }
+    const interval = setInterval(() => {
+      setLoadingMsgIdx((prev) => (prev + 1) % LOADING_MESSAGES.length);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [isLoading]);
 
   const handleChange = (field: keyof FormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -201,8 +221,17 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ onSubmit, isLoading })
         <div className="relative bg-black/60 backdrop-blur-sm px-6 py-4 rounded-[7px] flex items-center justify-center gap-3 transition-colors group-hover:bg-black/40">
           {isLoading ? (
             <>
-              <Loader2 className="w-5 h-5 animate-spin text-blue-400" />
-              <span className="font-semibold text-white tracking-wide">Analyzing historical NYC construction patterns...</span>
+              <Loader2 className="w-5 h-5 animate-spin text-blue-400 shrink-0" />
+              <div className="overflow-hidden relative h-6 flex-1 flex items-center">
+                <motion.span 
+                  key={loadingMsgIdx}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="font-semibold text-white tracking-wide absolute"
+                >
+                  {LOADING_MESSAGES[loadingMsgIdx]}
+                </motion.span>
+              </div>
             </>
           ) : (
             <>

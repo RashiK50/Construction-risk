@@ -6,3 +6,6 @@ sentence-transformers
 langchain-google-genai
 langchain-core
 python-dotenv
+langchain
+torch
+transformers

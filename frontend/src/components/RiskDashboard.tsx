@@ -157,7 +157,7 @@ export const RiskDashboard: React.FC<RiskDashboardProps> = ({ data, isLoading })
         </div>
         <div className="w-px h-8 bg-white/10" />
         <div className="flex flex-col items-center">
-          <span className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Similarity Score</span>
+          <span className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Average Similarity Score</span>
           <span className="font-semibold text-white text-lg">{data.average_similarity_score}</span>
         </div>
       </motion.div>

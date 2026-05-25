@@ -13,7 +13,7 @@ function App() {
     setError(null);
     
     try {
-      const response = await fetch('http://localhost:8000/predict-risk', {
+      const response = await fetch('https://rash50-construction-risk-backend.hf.space/predict-risk', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
